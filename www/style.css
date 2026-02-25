@@ -1,0 +1,822 @@
+/* ── Reset & variables ─────────────────────────────────────────────────────── */
+:root {
+  --bg:           #0f1117;
+  --surface:      #1a1d27;
+  --surface2:     #242736;
+  --border:       #2e3149;
+  --accent:       #4a7eff;
+  --accent-hot:   #e85544;
+  --resolved:     #2ecc71;
+  --text:         #d0d4e8;
+  --text-dim:     #7a7f9a;
+  --input-node:   #7b4fbf;
+  --output-node:  #2e7d62;
+  --gate-fill:    #1e3a5f;
+  --gate-stroke:  #4a7eff;
+  --mono:         'Fira Mono', 'Cascadia Code', 'Consolas', monospace;
+  /* Two-party colour scheme */
+  --alice:        #4a7eff;
+  --alice-dim:    #1a2e6e;
+  --bob:          #e8a844;
+  --bob-dim:      #6b4a0e;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, sans-serif;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  gap: 0;
+}
+
+/* ── Explainer banner ────────────────────────────────────────────────────────── */
+#explainer-banner {
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  padding: 0.55rem 1.2rem;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  line-height: 1.55;
+}
+#explainer-banner strong { color: var(--text); }
+
+/* ── Inline section blurbs ───────────────────────────────────────────────────── */
+.setup-blurb {
+  font-size: 0.73rem;
+  color: var(--text-dim);
+  line-height: 1.55;
+  padding: 0 0 0.5rem;
+  margin: 0;
+}
+.party-blurb {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+  padding: 0.1rem 0 0.4rem;
+  margin: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.3rem;
+}
+.party-blurb strong { color: var(--text); }
+.section-blurb {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+  padding: 0.1rem 0.8rem 0.5rem;
+  margin: 0;
+  border-bottom: 1px solid var(--border);
+}
+.section-blurb strong { color: var(--text); }
+
+/* ── Output-learning explainer ───────────────────────────────────────────────── */
+#output-info-box {
+  border-top: 1px solid var(--border);
+  margin-top: 0.5rem;
+}
+.output-info-summary {
+  cursor: pointer;
+  list-style: none;
+}
+.output-info-summary::-webkit-details-marker { display: none; }
+.output-info-summary::before { content: '▶  '; font-size: 0.7em; }
+details[open] .output-info-summary::before { content: '▼  '; }
+.output-info-inner {
+  padding: 0.4rem 0.8rem 0.6rem;
+}
+.output-option {
+  margin: 0.6rem 0;
+  padding: 0.5rem 0.7rem;
+  border-left: 3px solid var(--border);
+  border-radius: 0 4px 4px 0;
+  background: var(--surface2);
+}
+.output-option p {
+  margin: 0.25rem 0 0;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+.output-option p strong { color: var(--text); }
+.output-option-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+.option-bob   { color: var(--accent); }
+.option-alice { color: var(--bob); }
+.option-both  { color: var(--resolved); }
+.option-tag {
+  font-size: 0.62rem;
+  font-weight: 400;
+  color: var(--text-dim);
+  margin-left: 0.4rem;
+}
+.option-note {
+  font-style: italic;
+  border-top: 1px solid var(--border);
+  padding-top: 0.3rem;
+  margin-top: 0.4rem !important;
+}
+.output-rule {
+  border-top: 1px solid var(--border);
+  padding-top: 0.4rem;
+  margin-top: 0.4rem !important;
+  border-bottom: none;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────────── */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0.6rem 1.2rem;
+}
+header h1 { font-size: 1.1rem; font-weight: 600; letter-spacing: 0.03em; }
+
+/* ── Setup panel ─────────────────────────────────────────────────────────────── */
+#setup-panel {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 0.8rem 1.2rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+#bristol-area  { flex: 2 1 300px; display: flex; flex-direction: column; gap: 4px; }
+#setup-buttons { display: flex; flex-direction: column; gap: 6px; justify-content: flex-end; }
+
+label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+
+textarea {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  resize: vertical;
+  width: 100%;
+}
+textarea:focus { outline: none; border-color: var(--accent); }
+
+#example-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+#example-select {
+  flex: 1;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 6px;
+  font-size: 0.78rem;
+}
+#example-select:focus { outline: none; border-color: var(--accent); }
+
+.hint { color: var(--text-dim); font-size: 0.8rem; }
+
+/* Input bit selectors */
+#input-bits-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 4px;
+}
+.bit-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.82rem;
+  color: var(--text);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.bit-label select {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 2px 4px;
+  font-size: 0.82rem;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────────────────── */
+button {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 0.45rem 1rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+button:hover:not(:disabled) { background: #3567e0; }
+button:disabled { background: var(--surface2); color: var(--text-dim); cursor: default; }
+
+/* ── Main area ───────────────────────────────────────────────────────────────── */
+#main-area {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ── Graph panel ─────────────────────────────────────────────────────────────── */
+#graph-panel {
+  background: var(--bg);
+  overflow: auto;
+  border-right: 1px solid var(--border);
+  padding: 0.5rem;
+}
+
+#circuit-svg { display: block; }
+
+/* Wires */
+.wire-path {
+  fill: none;
+  stroke: #3d4060;
+  stroke-width: 2;
+  transition: stroke 0.2s;
+}
+.wire-path.resolved {
+  stroke: var(--resolved);
+  stroke-width: 2.5;
+}
+
+/* Gate nodes */
+.gate-node {
+  fill: var(--gate-fill);
+  stroke: var(--gate-stroke);
+  stroke-width: 1.5;
+  rx: 4px;
+  transition: fill 0.15s;
+}
+.gate-node.active {
+  fill: #5c1a12;
+  stroke: var(--accent-hot);
+  stroke-width: 2;
+}
+
+.input-node  { fill: #2d1a4a; stroke: #7b4fbf; stroke-width: 1.5; }
+.output-node { fill: #0d3328; stroke: #2e7d62; stroke-width: 1.5; }
+
+.node-label {
+  fill: var(--text);
+  font-size: 11px;
+  font-family: var(--mono);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Wire number / label overlay on edges */
+.wire-label {
+  font-size: 10px;
+  font-family: var(--mono);
+  fill: var(--text-dim);
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+  user-select: none;
+  paint-order: stroke fill;
+  stroke: var(--bg);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.wire-label.wire-label-known {
+  fill: var(--resolved);
+  font-weight: 600;
+}
+
+/* Arrowhead */
+#arrowhead polygon { fill: #3d4060; }
+
+/* ── Center panel (protocol state) & Right panel (GC dump / log) ────────────── */
+#center-panel,
+#right-panel {
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
+  min-width: 0;
+}
+#center-panel { border-right: 1px solid var(--border); }
+#right-panel  { border-left: none; }
+
+#step-header {
+  padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: background 0.3s;
+}
+#step-header.phase-ready {
+  background: rgba(46, 204, 113, 0.15);
+}
+
+.info-title {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  padding: 0.5rem 0.8rem 0.25rem;
+}
+
+#gate-info {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  padding: 0.25rem 0.8rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  word-break: break-all;
+}
+
+/* Wire table */
+#wire-inspector { overflow-y: auto; flex: 1; }
+
+#wire-table, #gt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+#wire-table th, #gt-table th {
+  background: var(--surface2);
+  color: var(--text-dim);
+  font-weight: 500;
+  text-align: left;
+  padding: 0.3rem 0.6rem;
+  position: sticky;
+  top: 0;
+}
+#wire-table td, #gt-table td {
+  padding: 0.25rem 0.6rem;
+  border-top: 1px solid var(--border);
+}
+#wire-table tr:last-child td { border-bottom: none; }
+
+.bit-cell { text-align: center; }
+.mono     { font-family: var(--mono); font-size: 0.72rem; }
+
+/* Garbled table box */
+#garbled-table-box {
+  border-top: 1px solid var(--border);
+  padding-bottom: 0.5rem;
+}
+/* c(a) and c(b) columns are narrow; ciphertext gets the rest */
+#gt-table td:first-child,
+#gt-table td:nth-child(2),
+#gt-table th:first-child,
+#gt-table th:nth-child(2) {
+  width: 3rem;
+  text-align: center;
+  white-space: nowrap;
+  font-family: var(--mono);
+  color: var(--text-dim);
+}
+#gt-table td:last-child { font-family: var(--mono); font-size: 0.7rem; word-break: break-all; }
+
+/* ── Ownership panel ─────────────────────────────────────────────────────────── */
+#ownership-panel {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0.7rem 1.2rem;
+}
+.ownership-title {
+  display: flex;
+  align-items: baseline;
+  gap: 0.8rem;
+  padding: 0 0 0.5rem 0;
+}
+.ownership-hint {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  text-transform: none;
+  letter-spacing: 0;
+}
+#ownership-rows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding-bottom: 0.6rem;
+}
+.ownership-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.82rem;
+}
+.ownership-row .wire-id {
+  font-family: var(--mono);
+  color: var(--text-dim);
+  min-width: 2.4rem;
+}
+.owner-toggle {
+  display: flex;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+.owner-btn {
+  padding: 2px 8px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: var(--surface);
+  color: var(--text-dim);
+  border-radius: 0;
+  transition: background 0.12s, color 0.12s;
+}
+.owner-btn.active-alice { background: var(--alice-dim); color: var(--alice); }
+.owner-btn.active-bob   { background: var(--bob-dim);   color: var(--bob); }
+.owner-btn:hover:not(.active-alice):not(.active-bob) { background: var(--surface2); color: var(--text); }
+.ownership-row .bit-sel {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 2px 4px;
+  font-size: 0.82rem;
+}
+#ownership-actions {
+  display: flex;
+  gap: 0.5rem;
+  padding-top: 0.2rem;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover:not(:disabled) { background: #3567e0; }
+
+/* ── Phase bar ───────────────────────────────────────────────────────────────── */
+#phase-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.5rem 1.2rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.phase-step {
+  padding: 0.2rem 0.7rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: var(--surface2);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.phase-step.active  { background: var(--accent); color: #fff; border-color: var(--accent); }
+.phase-step.done    { background: #0e3a1c; color: var(--resolved); border-color: var(--resolved); }
+.phase-arrow { color: var(--text-dim); font-size: 1rem; padding: 0 0.1rem; }
+
+/* ── Party columns ───────────────────────────────────────────────────────────── */
+#party-panel {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+}
+.party-col {
+  flex: 1;
+  padding: 0.5rem 0.7rem;
+  min-width: 0;
+}
+.alice-col { border-right: 1px solid var(--border); border-left: 3px solid var(--alice); }
+.bob-col   { border-left: 3px solid var(--bob); }
+.party-heading {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  padding-bottom: 0.3rem;
+}
+.alice-heading { color: var(--alice); }
+.bob-heading   { color: var(--bob); }
+.party-wires { display: flex; flex-direction: column; gap: 2px; }
+.party-wire-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+}
+.party-wire-id { font-family: var(--mono); color: var(--text-dim); min-width: 2.2rem; }
+.party-wire-bit { font-family: var(--mono); font-weight: 600; }
+.party-wire-label { font-family: var(--mono); font-size: 0.68rem; color: var(--text-dim); }
+.alice-col .party-wire-bit { color: var(--alice); }
+.bob-col   .party-wire-bit { color: var(--bob); }
+.label-hidden { color: var(--text-dim); font-style: italic; font-size: 0.72rem; }
+.label-revealed { color: var(--resolved); font-size: 0.68rem; font-family: var(--mono); }
+
+/* Output result card shown in party columns after phase 6 */
+.party-output-result {
+  margin-top: 0.6rem;
+  padding: 0.5rem 0.6rem;
+  border-top: 2px solid var(--resolved);
+  background: rgba(46, 204, 113, 0.07);
+  border-radius: 0 0 4px 4px;
+}
+.party-output-alice-note {
+  border-top-color: var(--alice);
+  background: rgba(74, 126, 255, 0.07);
+}
+.party-output-title {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  margin-bottom: 0.35rem;
+  line-height: 1.4;
+}
+.party-output-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.1rem 0;
+  font-size: 0.82rem;
+}
+
+/* Two-label pair widget (Alice shows k0 and k1) */
+.label-pair { display: flex; flex-direction: column; gap: 1px; margin-top: 1px; }
+.label-pair-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  padding: 1px 3px;
+  border-radius: 2px;
+}
+.label-pair-row.selected { background: rgba(46,204,113,0.12); color: var(--resolved); }
+.label-pair-row.unselected { color: var(--text-dim); }
+.label-k { font-weight: 700; font-size: 0.6rem; min-width: 1.6rem; }
+.label-k.k0 { color: var(--text-dim); }
+.label-k.k1 { color: var(--text-dim); }
+.label-pair-row.selected .label-k { color: var(--resolved); }
+.label-hex { word-break: break-all; }
+
+/* Bob's received label (shown after OT) */
+.label-ot-received {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--bob);
+  word-break: break-all;
+  padding: 2px 3px;
+  border-radius: 2px;
+  background: rgba(232,168,68,0.1);
+  margin-top: 1px;
+}
+
+/* OT context: Alice's m0/m1 shown before protocol messages */
+.ot-context {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0.3rem 0.8rem 0.2rem;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.2rem;
+  font-size: 0.7rem;
+}
+.ot-context-title {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--alice);
+  margin-bottom: 1px;
+}
+.ot-context-row {
+  display: flex;
+  gap: 0.4rem;
+  align-items: baseline;
+}
+.ot-context-key { font-family: var(--mono); color: var(--text-dim); font-size: 0.65rem; min-width: 2rem; }
+.ot-context-val { font-family: var(--mono); font-size: 0.65rem; color: var(--text); word-break: break-all; }
+
+/* ── OT exchange panel ───────────────────────────────────────────────────────── */
+#ot-panel {
+  border-top: 1px solid var(--border);
+  padding-bottom: 0.4rem;
+}
+.ot-wire-label {
+  padding: 0 0.8rem 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--bob);
+}
+.ot-msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.2rem 0.8rem;
+  font-size: 0.75rem;
+}
+.ot-msg-dir {
+  flex-shrink: 0;
+  width: 9rem;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+.ot-msg-dir .arrow-alice { color: var(--alice); }
+.ot-msg-dir .arrow-bob   { color: var(--bob); }
+.ot-msg-key  { font-family: var(--mono); font-size: 0.68rem; color: var(--text-dim); word-break: break-all; }
+.ot-msg-val  { font-family: var(--mono); font-size: 0.68rem; color: var(--text); word-break: break-all; }
+
+/* ── Full garbled circuit dump ───────────────────────────────────────────────── */
+#gc-box {
+  border-top: 1px solid var(--border);
+}
+.gc-summary {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  list-style: none;
+}
+.gc-summary::marker, .gc-summary::-webkit-details-marker { display: none; }
+.gc-summary::before { content: '▸'; font-size: 0.7rem; color: var(--text-dim); }
+#gc-details[open] .gc-summary::before { content: '▾'; }
+.gc-summary:hover { background: var(--surface2); }
+
+#gc-box-inner { padding: 0 0.8rem 0.8rem; }
+
+.gc-section-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  padding: 0.5rem 0 0.25rem;
+  border-top: 1px solid var(--border);
+  margin-top: 0.3rem;
+}
+.gc-section-label:first-child { border-top: none; margin-top: 0; }
+
+/* Wire keys table */
+#wk-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.65rem;
+  margin-bottom: 0.3rem;
+}
+#wk-table th {
+  color: var(--text-dim);
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-align: left;
+  padding: 3px 6px;
+  border-bottom: 1px solid var(--border);
+}
+#wk-table td {
+  padding: 2px 6px;
+  font-family: var(--mono);
+  word-break: break-all;
+  font-size: 0.63rem;
+  border-bottom: 1px solid rgba(46,49,73,0.5);
+  vertical-align: top;
+}
+.wk-wire-id { color: var(--text-dim); white-space: nowrap; }
+.wk-tag {
+  font-size: 0.55rem;
+  padding: 0 3px;
+  border-radius: 2px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+.wk-tag-in  { background: rgba(123,79,191,0.2); color: #b893ff; }
+.wk-tag-out { background: rgba(46,125,98,0.2);  color: var(--resolved); }
+.wk-k0 { color: var(--text-dim); }
+.wk-k1 { color: var(--text); }
+tr.wk-input-row  { background: rgba(123,79,191,0.05); }
+tr.wk-output-row { background: rgba(46,125,98,0.05); }
+
+/* Garbled gate blocks */
+#gt-all-box { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.1rem; }
+.gc-gate-block {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.gc-gate-header {
+  background: var(--surface2);
+  padding: 4px 8px;
+  font-size: 0.68rem;
+  font-family: var(--mono);
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+.gc-gate-header .gh-type { font-weight: 700; color: var(--accent); }
+.gc-gate-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.63rem;
+}
+.gc-gate-table th {
+  color: var(--text-dim);
+  font-size: 0.58rem;
+  font-weight: 600;
+  text-align: left;
+  padding: 2px 6px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.gc-gate-table td {
+  padding: 2px 6px;
+  font-family: var(--mono);
+  word-break: break-all;
+  border-bottom: 1px solid rgba(46,49,73,0.4);
+}
+.gc-gate-table td:first-child,
+.gc-gate-table td:nth-child(2),
+.gc-gate-table th:first-child,
+.gc-gate-table th:nth-child(2) {
+  width: 3rem;
+  text-align: center;
+  white-space: nowrap;
+  color: var(--text-dim);
+  word-break: normal;
+}
+.gc-gate-table td:last-child { word-break: break-all; }
+
+/* ── Protocol log ────────────────────────────────────────────────────────────── */
+#protocol-log-box {
+  border-top: 1px solid var(--border);
+  padding-bottom: 0.5rem;
+}
+#protocol-log {
+  /* No max-height — the right panel itself scrolls */
+  padding: 0.2rem 0;
+}
+.log-entry {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 0.5rem;
+  row-gap: 0.1rem;
+  padding: 0.25rem 0.8rem;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  border-bottom: 1px solid transparent;
+}
+.log-entry:hover { background: var(--surface2); }
+.log-phase {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-radius: 3px;
+  padding: 1px 5px;
+  align-self: start;
+  margin-top: 1px;
+}
+.log-phase-1 { background: #1e2e5e; color: var(--alice); }
+.log-phase-2 { background: #1e2e5e; color: #8aabff; }
+.log-phase-3 { background: #1e2e5e; color: #adc6ff; }
+.log-phase-4 { background: var(--bob-dim); color: var(--bob); }
+.log-phase-5 { background: #0d3328; color: var(--resolved); }
+.log-phase-6 { background: #0d3328; color: var(--resolved); }
+.log-text    { color: var(--text); font-family: var(--mono); grid-column: 2; }
+.log-detail  {
+  grid-column: 2;
+  color: var(--text-dim);
+  font-size: 0.68rem;
+  font-family: system-ui, sans-serif;
+  line-height: 1.45;
+  padding-bottom: 0.1rem;
+}
+
+/* ── Controls bar ────────────────────────────────────────────────────────────── */
+#controls-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 100;
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+.btn-next-protocol {
+  margin-left: auto;  /* push to right side */
+  background: var(--alice);
+}
+.btn-next-protocol:hover:not(:disabled) { background: #3567e0; }

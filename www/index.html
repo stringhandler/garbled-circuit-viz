@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Garbled Circuit Visualizer</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>Garbled Circuit Visualizer</h1>
+</header>
+
+<div id="explainer-banner">
+  A <strong>garbled circuit</strong> lets two parties compute a function of their private inputs without either party revealing those inputs.
+  <strong>Alice</strong> (the garbler) encrypts the circuit by replacing every gate's truth table with an encrypted &ldquo;garbled table.&rdquo;
+  <strong>Bob</strong> (the evaluator) receives the garbled circuit and uses <strong>Oblivious Transfer</strong> to obtain exactly one label per input wire &mdash; enough to evaluate the circuit gate by gate, without learning any other values.
+</div>
+
+<div id="setup-panel">
+  <div id="bristol-area">
+    <label for="bristol-input">Bristol Fashion Circuit</label>
+    <textarea id="bristol-input" rows="8" spellcheck="false" placeholder="Paste a Bristol Format circuit here…
+
+Example (half-adder):
+2 4
+2 1 1
+2 1 1
+2 1 0 1 2 XOR
+2 1 0 1 3 AND"></textarea>
+    <div id="example-row">
+      <select id="example-select">
+        <option value="">— load an example —</option>
+        <option value="and">Single AND gate</option>
+        <option value="half-adder">Half-adder (XOR + AND)</option>
+        <option value="full-adder">Full adder (3-bit in, 2-bit out)</option>
+        <option value="mux">2-to-1 MUX</option>
+      </select>
+      <button id="btn-load-example">Load</button>
+    </div>
+  </div>
+
+  <div id="setup-buttons">
+    <button id="btn-parse">Parse Circuit</button>
+  </div>
+</div>
+
+<!-- Ownership + bit assignment panel (shown after parse) -->
+<div id="ownership-panel" style="display:none">
+  <div class="info-title ownership-title">
+    Assign Input Wires &amp; Bits
+    <span class="ownership-hint">Click Alice or Bob to assign ownership, then set the bit value</span>
+  </div>
+  <p class="setup-blurb">
+    Each party knows only their own input bits &mdash; never the other party&rsquo;s.
+    Alice will send her labels directly to Bob (Phase&nbsp;3).
+    Bob will obtain his labels via Oblivious Transfer (Phase&nbsp;4), a protocol that prevents Alice from learning which label Bob selected.
+  </p>
+  <div id="ownership-rows">
+    <!-- Populated dynamically: one row per input wire -->
+  </div>
+  <div id="ownership-actions"><!-- next button lives in controls bar --></div>
+</div>
+
+<!-- Protocol phase bar (shown after garble) -->
+<div id="phase-bar" style="display:none">
+  <div class="phase-step" data-phase="1">1 · Garble</div>
+  <div class="phase-arrow">›</div>
+  <div class="phase-step" data-phase="2">2 · Send GC</div>
+  <div class="phase-arrow">›</div>
+  <div class="phase-step" data-phase="3">3 · Alice Labels</div>
+  <div class="phase-arrow">›</div>
+  <div class="phase-step" data-phase="4">4 · OT</div>
+  <div class="phase-arrow">›</div>
+  <div class="phase-step" data-phase="5">5 · Evaluate</div>
+  <div class="phase-arrow">›</div>
+  <div class="phase-step" data-phase="6">6 · Done</div>
+</div>
+
+<div id="main-area">
+  <!-- Column 1: Circuit graph -->
+  <div id="graph-panel">
+    <svg id="circuit-svg" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrowhead" markerWidth="8" markerHeight="6"
+                refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#666" />
+        </marker>
+      </defs>
+      <g id="svg-root"></g>
+    </svg>
+  </div>
+
+  <!-- Column 2: Protocol state (party labels, step info, active gate, wire table) -->
+  <div id="center-panel">
+    <!-- Party columns: Alice / Bob -->
+    <div id="party-panel" style="display:none">
+      <div id="alice-col" class="party-col alice-col">
+        <div class="party-heading alice-heading">Alice</div>
+        <p class="party-blurb">Alice holds <strong>both</strong> labels (k₀ and k₁) for every wire. She sends Bob the label matching her actual bit directly. Highlighted label = the one she sends.</p>
+        <div id="alice-wires" class="party-wires"></div>
+      </div>
+      <div id="bob-col" class="party-col bob-col">
+        <div class="party-heading bob-heading">Bob</div>
+        <p class="party-blurb">Bob receives <strong>one</strong> label per wire. He cannot tell whether k₀ or k₁ he holds — they are indistinguishable random values. The color bit (LSB) reveals the bit value in this scheme.</p>
+        <div id="bob-wires" class="party-wires"></div>
+      </div>
+    </div>
+
+    <div id="step-header">
+      <span id="step-label">Step 0 / 0</span>
+    </div>
+
+    <div id="gate-info-box">
+      <div class="info-title">Active Gate</div>
+      <div id="gate-info">—</div>
+      <p class="section-blurb">Bob evaluates each gate using only the labels he holds. He does not need to know the bit values &mdash; he uses labels purely as cryptographic keys to decrypt the garbled table row.</p>
+    </div>
+
+    <div id="wire-inspector">
+      <div class="info-title">Known Wire Labels</div>
+      <p class="section-blurb">One label per wire. Labels are random 128-bit values &mdash; indistinguishable from noise. The <strong>color bit</strong> (LSB of byte 0) encodes the bit value in this implementation: color&nbsp;0&nbsp;→&nbsp;value&nbsp;0, color&nbsp;1&nbsp;→&nbsp;value&nbsp;1. Bob reads this bit to learn the result.</p>
+      <table id="wire-table">
+        <thead>
+          <tr>
+            <th>Wire</th>
+            <th>Bit</th>
+            <th>Label (hex)</th>
+          </tr>
+        </thead>
+        <tbody id="wire-tbody"></tbody>
+      </table>
+    </div>
+
+    <div id="garbled-table-box" style="display:none">
+      <div class="info-title">Garbled Table (active gate)</div>
+      <p class="section-blurb">Bob picks the row using <strong>c(a)·2 + c(b)</strong>, where c(x) is the color bit (LSB) of each input label. He decrypts that row with AES-Davies-Meyer using both input labels as keys. The other rows produce garbage &mdash; he can decrypt exactly one.</p>
+      <table id="gt-table">
+        <thead><tr><th>c(a)</th><th>c(b)</th><th>Ciphertext</th></tr></thead>
+        <tbody id="gt-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Column 3: Reference material (full GC, OT messages, protocol log) -->
+  <div id="right-panel">
+    <!-- Full garbled circuit dump (collapsible, shown after garble) -->
+    <div id="gc-box" style="display:none">
+      <details id="gc-details">
+        <summary class="info-title gc-summary">Full Garbled Circuit</summary>
+        <div id="gc-box-inner">
+          <p class="section-blurb" style="margin:0.4rem 0 0.2rem">
+            Alice holds <strong>both</strong> labels for every wire. Bob receives the garbled tables (all rows), but without the correct input labels he cannot decrypt any gate.
+            This table is Alice&rsquo;s private view &mdash; in the real protocol Bob never sees k₀ and k₁ side by side.
+          </p>
+          <div class="gc-section-label">Wire Keys &mdash; k₀ = label for bit-value 0, k₁ = label for bit-value 1</div>
+          <table id="wk-table">
+            <thead>
+              <tr><th>Wire</th><th>k₀ (color 0)</th><th>k₁ (color 1)</th></tr>
+            </thead>
+            <tbody id="wk-tbody"></tbody>
+          </table>
+          <div class="gc-section-label">Garbled Tables &mdash; each row is an AES-DM encrypted output label</div>
+          <div id="gt-all-box"></div>
+        </div>
+      </details>
+    </div>
+
+    <!-- OT exchange panel (shown during phase 4) -->
+    <div id="ot-panel" style="display:none">
+      <div class="info-title">Oblivious Transfer</div>
+      <p class="section-blurb">A 3-message protocol (Chou-Orlandi 2015 over Ristretto255) that transfers exactly one of Alice&rsquo;s two labels to Bob. <strong>Alice never learns Bob&rsquo;s selection bit.</strong> Bob never learns the label he didn&rsquo;t receive. Each of Bob&rsquo;s input wires requires one OT round.</p>
+      <div id="ot-wire-label" class="ot-wire-label"></div>
+      <div id="ot-msgs"></div>
+    </div>
+
+    <!-- Protocol message log -->
+    <div id="protocol-log-box" style="display:none">
+      <div class="info-title">Protocol Log</div>
+      <div id="protocol-log"></div>
+    </div>
+
+    <!-- Output-learning explainer (shown when evaluation begins) -->
+    <div id="output-info-box" style="display:none">
+      <details>
+        <summary class="info-title output-info-summary">Who Learns the Output?</summary>
+        <div class="output-info-inner">
+          <p class="section-blurb">Bob ends up holding one label per output wire. <strong>Who learns the actual bit values depends entirely on who holds the label&rarr;bit mapping.</strong></p>
+
+          <div class="output-option">
+            <div class="output-option-title option-bob">Option 1 &middot; Bob Learns <span class="option-tag">Standard Yao</span></div>
+            <p>Alice provides a <strong>decoding table</strong> mapping each output label to 0 or 1. Bob translates his labels and learns the result. Alice learns nothing.</p>
+            <p class="option-note">In this visualizer the <strong>color bit</strong> (LSB of each label) directly encodes the bit value, so Bob reads it without a separate decoding table &mdash; a common simplification.</p>
+          </div>
+
+          <div class="output-option">
+            <div class="output-option-title option-alice">Option 2 &middot; Alice Learns</div>
+            <p>Alice does <strong>not</strong> provide the decoding table. Bob sends his output labels back to Alice. She checks which label she originally assigned to 0 vs 1 and learns the result. Bob learns nothing beyond what the output implies.</p>
+          </div>
+
+          <div class="output-option">
+            <div class="output-option-title option-both">Option 3 &middot; Both Learn</div>
+            <p>Alice publishes the decoding table so Bob can decode, then communicates the result back. Alternatively, output wires can be assigned to different parties &mdash; some decode to Alice, some to Bob.</p>
+          </div>
+
+          <p class="section-blurb output-rule"><strong>Big-picture rule:</strong> whoever knows the output label mapping learns the output.</p>
+        </div>
+      </details>
+    </div>
+  </div>
+</div>
+
+<div id="controls-bar">
+  <button id="btn-reset" disabled>&#8635; Reset</button>
+  <button id="btn-back"  disabled>&#8592; Back</button>
+  <button id="btn-fwd"   disabled>Forward &#8594;</button>
+  <button id="btn-run"   disabled>&#9654; Run All</button>
+  <button id="btn-next"  disabled class="btn-next-protocol">Next &#8594;</button>
+</div>
+
+<!-- Dagre UMD (provides window.dagre + window.dagre.graphlib) -->
+<script src="https://cdn.jsdelivr.net/npm/dagre@0.8.5/dist/dagre.min.js"></script>
+<script type="module" src="main.js"></script>
+
+</body>
+</html>
